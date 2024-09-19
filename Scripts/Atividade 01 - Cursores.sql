@@ -1,6 +1,7 @@
 USE faculdade;
 
 /* 1. Obter os códigos dos diferentes departamentos que têm turmas no ano-semestre 2002/1 */
+
 DELIMITER //
 
 CREATE PROCEDURE get_cod_depto_turmas(IN ano_sem_pass INT)
@@ -33,7 +34,8 @@ BEGIN
 			LEAVE read_loop;
 		END IF;
         
-        INSERT INTO results(RESULT) VALUES(depto);
+        INSERT INTO results(RESULT) 
+        VALUES(depto);
 	END LOOP;
     
     SELECT * 
@@ -80,7 +82,8 @@ BEGIN
 			LEAVE read_loop;
 		END IF;
 	
-		INSERT INTO results(RESULT) VALUES(CONCAT('O professor de código ', cod_prof_r, ' no ano ', ano_sem_r, ' ministrou ', qtd_r, ' aulas.'));
+		INSERT INTO results(RESULT) 
+		VALUES(CONCAT('O professor de código ', cod_prof_r, ' no ano ', ano_sem_r, ' ministrou ', qtd_r, ' aulas.'));
 		
 	END LOOP;
 	
@@ -104,3 +107,151 @@ WHERE
 	AND p.AnoSem = 20021;
 
 CALL get_cod_depto_turmas_prof(20021, "INF01");
+
+/* 03. 1. Horários de Aula do Professor "Antunes" em 2002/1 */
+
+DELIMITER //
+
+CREATE PROCEDURE get_horarios_antunes()
+BEGIN 
+	DECLARE done INT DEFAULT FALSE;
+	DECLARE dia_sem INT;
+	DECLARE hora_inicio INT;
+	DECLARE num_horas INT;
+	
+	DECLARE cur CURSOR FOR
+        SELECT 
+            h.DiaSem,
+            h.HoraInicio, 
+            h.NumHoras
+        FROM Horario h
+        JOIN Turma t ON h.AnoSem = t.AnoSem 
+            AND h.CodDepto = t.CodDepto 
+            AND h.NumDisc = t.NumDisc 
+            AND h.SiglaTur = t.SiglaTur
+        JOIN ProfTurma p ON t.AnoSem = p.AnoSem 
+            AND t.CodDepto = p.CodDepto
+            AND t.NumDisc = p.NumDisc
+            AND t.SiglaTur = p.SiglaTur
+        JOIN Professor p1 ON p1.CodProf = p.CodProf
+        WHERE p1.NomeProf = 'Antunes' AND h.AnoSem = 20021;
+	
+	DECLARE CONTINUE handler FOR NOT FOUND SET done = TRUE;
+
+	OPEN cur;
+
+	CREATE TEMPORARY TABLE IF NOT EXISTS results(
+		dia_semana INT,
+		hora_inicial INT,
+		numero_horas INT
+	);
+	
+	read_loop: LOOP
+		FETCH cur INTO dia_sem, hora_inicio, num_horas;
+		
+		IF done THEN
+			LEAVE read_loop;
+		END IF;
+	
+		INSERT INTO results(dia_semana, hora_inicial, numero_horas)
+		VALUES(dia_sem, hora_inicio, num_horas);
+	
+	END LOOP;
+	
+	CLOSE cur;
+
+	SELECT *
+	FROM results;
+	
+END
+//
+DELIMITER ;
+
+CALL get_horarios_antunes();
+
+/* 04. Nomes dos Departamentos com Turmas na Sala 101 do Prédio 'Informática - aulas' em 2002/1 */
+
+DELIMITER //
+
+CREATE PROCEDURE get_departamentos_sala()
+BEGIN
+	DECLARE done INT DEFAULT FALSE;
+	DECLARE nome_depto VARCHAR(40);
+
+	DECLARE cur CURSOR FOR
+		SELECT 
+			DISTINCT
+			d.NomeDepto
+		FROM Depto d
+		JOIN Turma t ON d.CodDepto = t.CodDepto
+		JOIN Horario h ON t.AnoSem = h.AnoSem 
+			AND t.CodDepto = h.CodDepto 
+			AND t.NumDisc = h.NumDisc 
+			AND t.SiglaTur = h.SiglaTur
+		JOIN Sala s ON h.NumSala = s.NumSala
+			AND h.CodPred = s.CodPred
+		JOIN Predio p ON s.CodPred = p.CodPred
+		WHERE t.AnoSem = 20021
+			AND s.NumSala = 101
+			AND p.NomePredio = 'Informática';
+
+	DECLARE CONTINUE handler FOR NOT FOUND SET done = TRUE;
+
+	OPEN cur;
+
+	CREATE TEMPORARY TABLE IF NOT EXISTS results(
+		NomeDepto VARCHAR(40)
+	);
+
+	read_loop: LOOP
+		FETCH cur INTO nome_depto;
+		IF done THEN
+			LEAVE read_loop;
+		END IF;
+	
+		INSERT INTO results (NomeDepto)
+		VALUES (nome_depto);
+		
+	END LOOP;
+	
+	CLOSE cur;
+
+	SELECT *
+	FROM results;
+	
+END
+//
+DELIMITER ;
+
+CALL get_departamentos_sala();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
