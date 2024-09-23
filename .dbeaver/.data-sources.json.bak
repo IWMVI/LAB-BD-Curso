@@ -1,40 +1,4 @@
 {
 	"folders": {},
-	"connections": {
-		"mysql8-19200dc1cea-5731f1102ac50311": {
-			"provider": "mysql",
-			"driver": "mysql8",
-			"name": "localhost",
-			"save-password": true,
-			"configuration": {
-				"host": "localhost",
-				"port": "3306",
-				"url": "jdbc:mysql://localhost:3306/",
-				"configurationType": "MANUAL",
-				"home": "mysql_client",
-				"type": "dev",
-				"closeIdleConnection": true,
-				"auth-model": "native"
-			},
-			"custom-properties": {
-				"transaction.smart.commit": "true"
-			}
-		}
-	},
-	"connection-types": {
-		"dev": {
-			"name": "Desenvolvimento",
-			"color": "255,255,255",
-			"description": "Banco de dados de desenvolvimento",
-			"auto-commit": true,
-			"confirm-execute": false,
-			"confirm-data-change": false,
-			"smart-commit": false,
-			"smart-commit-recover": true,
-			"auto-close-transactions": true,
-			"close-transactions-period": 1800,
-			"auto-close-connections": true,
-			"close-connections-period": 14400
-		}
-	}
+	"connections": {}
 }
