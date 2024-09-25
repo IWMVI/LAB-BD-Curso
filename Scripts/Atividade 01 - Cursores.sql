@@ -220,25 +220,32 @@ CALL get_departamentos_sala(101, 'Informática');
 
 /* 5. Obter os códigos dos professores com título denominado 'Doutor' que não ministraram aulas em 2002/1. */
 
+DROP PROCEDURE IF EXISTS get_professores_doutor_sem_aulas;
+
 DELIMITER //
-CREATE PROCEDURE get_professores_doutor_sem_aulas()
+
+CREATE PROCEDURE get_professores_doutor_sem_aulas(IN titulo VARCHAR(40), IN ano_sem INT)
 BEGIN
     DECLARE done INT DEFAULT FALSE;
     DECLARE cod_prof INT;
 
     DECLARE cur CURSOR FOR
-    SELECT p.CodProf
-    FROM Professor p
-    JOIN Titulacao t ON p.CodTit = t.CodTit
-    WHERE t.NomeTit = 'Doutor'
-    AND p.CodProf NOT IN (
-        SELECT pt.CodProf
-        FROM ProfTurma pt
-        WHERE pt.AnoSem = 20021
-    );
+        SELECT p.CodProf
+        FROM Professor p
+        JOIN Titulacao t ON p.CodTit = t.CodTit
+        LEFT JOIN ProfTurma pt ON p.CodProf = pt.CodProf 
+            AND pt.AnoSem = ano_sem  -- Verifica se o professor não está associado a esse ano
+        WHERE t.NomeTit = titulo
+        AND pt.CodProf IS NULL;  -- Seleciona apenas os professores que não ministraram aulas
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
+    DROP TEMPORARY TABLE IF EXISTS results; 
+    
+    CREATE TEMPORARY TABLE results(
+        result INT
+    );
+    
     OPEN cur;
 
     read_loop: LOOP
@@ -246,87 +253,89 @@ BEGIN
         IF done THEN
             LEAVE read_loop;
         END IF;
-        SELECT cod_prof;
+       
+        INSERT INTO results(result)
+        VALUES (cod_prof);
+      
     END LOOP;
 
     CLOSE cur;
-END
-//
+   
+    SELECT *
+    FROM results;
+  
+END //
+
 DELIMITER ;
+
+CALL get_professores_doutor_sem_aulas('Doutor', 20021);
 
 /* 6. Obter os identificadores das salas que tiveram turmas nas segundas e quartas-feiras em 2002/1 */
 /* a) Nas segundas-feiras (dia da semana = 2), tiveram ao menos uma turma do departamento 'Informática' */
-
-DELIMITER //
-CREATE PROCEDURE get_salas_segunda()
-BEGIN
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE cod_pred INT;
-    DECLARE num_sala INT;
-
-    DECLARE cur CURSOR FOR
-    SELECT h.CodPred, h.NumSala
-    FROM Horario h
-    JOIN Turma t ON h.AnoSem = t.AnoSem
-		AND h.CodDepto = t.CodDepto 
-		AND h.NumDisc = t.NumDisc 
-        AND h.SiglaTur = t.SiglaTur
-    WHERE h.DiaSem = 2 AND h.AnoSem = 20021 AND t.CodDepto = 'INF01';
-
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-
-    OPEN cur;
-
-    read_loop: LOOP
-        FETCH cur INTO cod_pred, num_sala;
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
-        SELECT cod_pred, num_sala;
-    END LOOP;
-
-    CLOSE cur;
-END
-//
-DELIMITER ;
-
 /* b) Nas quartas-feiras (dia da semana = 4), tiveram ao menos uma turma ministrada pelo professor denominado 'Antunes' */
 
+DROP PROCEDURE IF EXISTS get_id_sala;
+
 DELIMITER //
-CREATE PROCEDURE get_salas_quarta()
+CREATE PROCEDURE get_id_sala(IN ano_sem INT, IN nome_prof VARCHAR(40), IN depto VARCHAR(40))
 BEGIN
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE cod_pred INT;
-    DECLARE num_sala INT;
-
+	DECLARE done INT DEFAULT FALSE;
+    DECLARE num_sala_r VARCHAR(40);
+    DECLARE cod_pred_r VARCHAR(40);
+    DECLARE dia_sem_r INT;
+    DECLARE qtd_r INT;
+    DECLARE nome_prof_r VARCHAR(40);
+    
     DECLARE cur CURSOR FOR
-    SELECT h.CodPred, h.NumSala
-    FROM Horario h
-    JOIN ProfTurma pt ON h.AnoSem = pt.AnoSem 
-		AND h.CodDepto = pt.CodDepto 
-        AND h.NumDisc = pt.NumDisc 
-        AND h.SiglaTur = pt.SiglaTur
-    JOIN Professor p ON pt.CodProf = p.CodProf
-    WHERE h.DiaSem = 4
-		AND h.AnoSem = 20021 
-        AND p.NomeProf = 'Antunes';
-
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-
-    OPEN cur;
-
-    read_loop: LOOP
-        FETCH cur INTO cod_pred, num_sala;
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
-        SELECT cod_pred, num_sala;
-    END LOOP;
-
-    CLOSE cur;
+		SELECT DISTINCT
+			s.NumSala,
+            s.CodPred,
+            h.DiaSem,
+            p.NomeProf,
+            COUNT(s.NumSala) as Quantidade
+        FROM Sala s
+        JOIN Horario h ON h.NumSala = s.NumSala
+			AND h.CodPred = s.CodPred
+		JOIN Depto d ON d.CodDepto = h.CodDepto
+			AND d.NomeDepto = depto
+		JOIN Professor p ON p.CodDepto = d.CodDepto
+			AND p.NomeProf = nome_prof
+		JOIN ProfTurma pt ON pt.CodProf = p.CodProf
+			AND h.NumDisc = pt.NumDisc
+		WHERE (h.DiaSem = 4 OR h.DiaSem = 2) 
+			AND h.AnoSem = ano_sem
+		GROUP BY s.NumSala, s.CodPred, s.NumSala, h.DiaSem, p.NomeProf
+        HAVING Quantidade >= 1;
+        
+        DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+        
+        OPEN cur;
+        
+        DROP TEMPORARY TABLE IF EXISTS results;
+        
+        CREATE TEMPORARY TABLE results(
+			result VARCHAR(255)
+        );
+        
+        read_loop: LOOP
+			FETCH cur INTO num_sala_r, cod_pred_r, dia_sem_r, nome_prof_r, qtd_r;
+            
+            IF done THEN
+				LEAVE read_loop;
+			END IF;
+            
+            INSERT INTO results(result)
+            VALUES (CONCAT('Número Sala: ', num_sala_r, ' Número Prédio: ', cod_pred_r, ' Dia Semana: ', dia_sem_r, ' Professor: ', nome_prof_r));
+		
+        END LOOP;
+        
+        SELECT *
+        FROM results;
 END
 //
 DELIMITER ;
+
+CALL get_id_sala(20021, 'Antunes', 'Informática'); 
 
 /* 7. Obter o dia da semana, a hora de início e o número de horas de cada turma ministrada por 'Antunes' em 2002/1,  
       na sala número 101 e prédio de código 43423 */
@@ -558,17 +567,3 @@ BEGIN
 END
 //
 DELIMITER ;
-
-CALL get_cod_depto_turmas(20021);
-CALL get_cod_depto_turmas_prof(20021, 'INF01');
-CALL get_horarios_antunes();
-CALL get_departamentos_sala();
-CALL get_professores_doutor_sem_aulas();
-CALL get_salas_segunda();
-CALL get_salas_quarta();
-CALL get_aulas_antunes();
-CALL get_professores_outros_deptos();
-CALL get_horarios_conflitantes();
-CALL get_disciplinas_com_prerequisitos();
-CALL get_disciplinas_sem_prerequisitos();
-CALL get_disciplinas_com_2_prerequisitos();
