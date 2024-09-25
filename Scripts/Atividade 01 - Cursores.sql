@@ -16,8 +16,8 @@ BEGIN
 			Turma
 		WHERE
 			AnoSem = ano_sem_pass;
-		    DECLARE CONTINUE HANDLER FOR NOT FOUND SET
-			done = TRUE;
+            
+	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
     
     OPEN cursor_depto;
 	
@@ -70,7 +70,7 @@ BEGIN
 
 	OPEN cursor_depto;
 
-	DROP TABLE IF EXISTS results;
+	DROP TEMPORARY TABLE IF EXISTS results;
 	CREATE TEMPORARY TABLE results (
 		RESULT VARCHAR(255)
 	);
@@ -94,68 +94,60 @@ END
 //
 DELIMITER ;
 
-SELECT *
-FROM profturma;
-
-SELECT
-	CodProf,
-	AnoSem AS QTD
-FROM
-	profturma p
-WHERE
-	p.CodDepto = 'INF01'
-	AND p.AnoSem = 20021;
-
 CALL get_cod_depto_turmas_prof(20021, 'INF01');
 
-/* 03. 1. Horários de Aula do Professor "Antunes" em 2002/1 */
+/* 03. Horários de Aula do Professor "Antunes" em 2002/1 */
+
+DROP PROCEDURE IF EXISTS get_horarios_antunes;
 
 DELIMITER //
 
-CREATE PROCEDURE get_horarios_antunes()
+CREATE PROCEDURE get_horarios_antunes(IN nome_prof VARCHAR(40))
 BEGIN 
 	DECLARE done INT DEFAULT FALSE;
-	DECLARE dia_sem INT;
-	DECLARE hora_inicio INT;
-	DECLARE num_horas INT;
+	DECLARE dia_sem VARCHAR(40);
+	DECLARE hora_inicio VARCHAR(40);
+	DECLARE num_horas VARCHAR(40);
+    DECLARE sigla_tur VARCHAR(20);
+    DECLARE hora_formata VARCHAR(5);
 	
 	DECLARE cur CURSOR FOR
         SELECT 
             h.DiaSem,
             h.HoraInicio, 
-            h.NumHoras
+            h.NumHoras,
+            h.SiglaTur
         FROM Horario h
-        JOIN Turma t ON h.AnoSem = t.AnoSem 
-            AND h.CodDepto = t.CodDepto 
-            AND h.NumDisc = t.NumDisc 
-            AND h.SiglaTur = t.SiglaTur
-        JOIN ProfTurma p ON t.AnoSem = p.AnoSem 
-            AND t.CodDepto = p.CodDepto
-            AND t.NumDisc = p.NumDisc
-            AND t.SiglaTur = p.SiglaTur
+        JOIN ProfTurma p ON h.SiglaTur = p.SiglaTur
         JOIN Professor p1 ON p1.CodProf = p.CodProf
-        WHERE p1.NomeProf = 'Antunes' AND h.AnoSem = 20021;
+			AND p1.NomeProf = nome_prof;
 	
-	DECLARE CONTINUE handler FOR NOT FOUND SET done = TRUE;
+	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
 	OPEN cur;
 
+	DROP TEMPORARY TABLE IF EXISTS results;
+
 	CREATE TEMPORARY TABLE IF NOT EXISTS results(
-		dia_semana INT,
-		hora_inicial INT,
-		numero_horas INT
+		result VARCHAR(255)
 	);
 	
 	read_loop: LOOP
-		FETCH cur INTO dia_sem, hora_inicio, num_horas;
+		FETCH cur INTO dia_sem, hora_inicio, num_horas, sigla_tur;
 		
 		IF done THEN
 			LEAVE read_loop;
 		END IF;
 	
-		INSERT INTO results(dia_semana, hora_inicial, numero_horas)
-		VALUES(dia_sem, hora_inicio, num_horas);
-	
+        SET hora_inicio = LPAD(hora_inicio, 4, '0');  -- Garantir que tenha 4 dígitos
+        SET hora_formata = CONCAT(SUBSTRING(hora_inicio, 1, 2), ':', SUBSTRING(hora_inicio, 3, 2));  -- Formatar para HH:MM
+
+        INSERT INTO results(result)
+        VALUES(CONCAT('Dia da Semana: ', dia_sem, 
+                      ' Horário de início: ', hora_formata, 
+                      ' Número de horas: ', num_horas, 
+                      ' Turma: ', sigla_tur));
+                      
 	END LOOP;
 	
 	CLOSE cur;
@@ -167,67 +159,64 @@ END
 //
 DELIMITER ;
 
-CALL get_horarios_antunes();
+CALL get_horarios_antunes('Antunes');
 
 /* 04. Nomes dos Departamentos com Turmas na Sala 101 do Prédio 'Informática - aulas' em 2002/1 */
 
+DROP PROCEDURE IF EXISTS get_departamentos_sala;
+
 DELIMITER //
 
-CREATE PROCEDURE get_departamentos_sala()
+CREATE PROCEDURE get_departamentos_sala(IN num_sala INT, IN nome_pred VARCHAR(40))
 BEGIN
-	DECLARE done INT DEFAULT FALSE;
-	DECLARE nome_depto VARCHAR(40);
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE nome_depto VARCHAR(40);
+    DECLARE nome_predio VARCHAR(40);
+    
+    DECLARE cur CURSOR FOR
+        SELECT DISTINCT 
+            d.NomeDepto,
+            p.NomePredio,
+            h.NumSala
+        FROM Depto d
+        JOIN Horario h ON h.CodDepto = d.CodDepto
+        JOIN Sala s ON h.NumSala = s.NumSala
+            AND s.NumSala = num_sala
+        JOIN Predio p ON p.CodPred = h.CodPred
+            AND p.NomePredio = nome_pred;
 
-	DECLARE cur CURSOR FOR
-		SELECT 
-			DISTINCT d.NomeDepto
-		FROM Depto d
-		JOIN Turma t ON d.CodDepto = t.CodDepto
-		JOIN Horario h ON t.AnoSem = h.AnoSem 
-			AND t.CodDepto = h.CodDepto 
-			AND t.NumDisc = h.NumDisc 
-			AND t.SiglaTur = h.SiglaTur
-		JOIN Sala s ON h.NumSala = s.NumSala
-			AND h.CodPred = s.CodPred
-		JOIN Predio p ON s.CodPred = p.CodPred
-		WHERE t.AnoSem = 20021
-			AND s.NumSala = 101
-			AND p.NomePredio = 'Informática';
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-	DECLARE CONTINUE handler FOR NOT FOUND SET done = TRUE;
+    DROP TEMPORARY TABLE IF EXISTS results;
 
-	DROP TEMPORARY TABLE IF EXISTS results;
+    CREATE TEMPORARY TABLE results(
+        result VARCHAR(255)
+    );
 
-	CREATE TEMPORARY TABLE results(
-		NomeDepto VARCHAR(40)
-	);
+    OPEN cur;
 
-	OPEN cur;
+    read_loop: LOOP
+        FETCH cur INTO nome_depto, nome_predio, num_sala;
+    
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+    
+        INSERT INTO results (result)
+        VALUES (CONCAT('Departamento: ', nome_depto, ' Prédio: ', nome_predio, ' Sala: ', num_sala));
+        
+    END LOOP;
+    
+    CLOSE cur;
 
-	read_loop: LOOP
-		FETCH cur INTO nome_depto;
-	
-		IF done THEN
-			LEAVE read_loop;
-		END IF;
-	
-		INSERT INTO results (NomeDepto)
-		VALUES (nome_depto);
-		
-	END LOOP;
-	
-	CLOSE cur;
-
-	SELECT DISTINCT *
-	FROM results;
-	
+    SELECT DISTINCT *
+    FROM results;
+    
 END
 //
 DELIMITER ;
 
-CALL get_departamentos_sala();
-
-SELECT * FROM depto d 
+CALL get_departamentos_sala(101, 'Informática');
 
 /* 5. Obter os códigos dos professores com título denominado 'Doutor' que não ministraram aulas em 2002/1. */
 
@@ -261,7 +250,7 @@ BEGIN
     END LOOP;
 
     CLOSE cur;
-END //
+END
 //
 DELIMITER ;
 
@@ -278,7 +267,10 @@ BEGIN
     DECLARE cur CURSOR FOR
     SELECT h.CodPred, h.NumSala
     FROM Horario h
-    JOIN Turma t ON h.AnoSem = t.AnoSem AND h.CodDepto = t.CodDepto AND h.NumDisc = t.NumDisc AND h.SiglaTur = t.SiglaTur
+    JOIN Turma t ON h.AnoSem = t.AnoSem
+		AND h.CodDepto = t.CodDepto 
+		AND h.NumDisc = t.NumDisc 
+        AND h.SiglaTur = t.SiglaTur
     WHERE h.DiaSem = 2 AND h.AnoSem = 20021 AND t.CodDepto = 'INF01';
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
@@ -294,7 +286,7 @@ BEGIN
     END LOOP;
 
     CLOSE cur;
-END //
+END
 //
 DELIMITER ;
 
@@ -310,9 +302,14 @@ BEGIN
     DECLARE cur CURSOR FOR
     SELECT h.CodPred, h.NumSala
     FROM Horario h
-    JOIN ProfTurma pt ON h.AnoSem = pt.AnoSem AND h.CodDepto = pt.CodDepto AND h.NumDisc = pt.NumDisc AND h.SiglaTur = pt.SiglaTur
+    JOIN ProfTurma pt ON h.AnoSem = pt.AnoSem 
+		AND h.CodDepto = pt.CodDepto 
+        AND h.NumDisc = pt.NumDisc 
+        AND h.SiglaTur = pt.SiglaTur
     JOIN Professor p ON pt.CodProf = p.CodProf
-    WHERE h.DiaSem = 4 AND h.AnoSem = 20021 AND p.NomeProf = 'Antunes';
+    WHERE h.DiaSem = 4
+		AND h.AnoSem = 20021 
+        AND p.NomeProf = 'Antunes';
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
@@ -327,7 +324,7 @@ BEGIN
     END LOOP;
 
     CLOSE cur;
-END //
+END
 //
 DELIMITER ;
 
@@ -335,7 +332,7 @@ DELIMITER ;
       na sala número 101 e prédio de código 43423 */
 
 DELIMITER //
-CREATE PROCEDURE get_horarios_antunes()
+CREATE PROCEDURE get_aulas_antunes()
 BEGIN
     DECLARE done INT DEFAULT FALSE;
     DECLARE dia_sem INT;
@@ -345,12 +342,15 @@ BEGIN
     DECLARE cur CURSOR FOR
     SELECT h.DiaSem, h.HoraInicio, h.NumHoras
     FROM Horario h
-    JOIN ProfTurma pt ON h.AnoSem = pt.AnoSem AND h.CodDepto = pt.CodDepto AND h.NumDisc = pt.NumDisc AND h.SiglaTur = pt.SiglaTur
+    JOIN ProfTurma pt ON h.AnoSem = pt.AnoSem 
+		AND h.CodDepto = pt.CodDepto 
+		AND h.NumDisc = pt.NumDisc 
+        AND h.SiglaTur = pt.SiglaTur
     JOIN Professor p ON pt.CodProf = p.CodProf
     WHERE p.NomeProf = 'Antunes'
-    AND h.AnoSem = 20021
-    AND h.NumSala = 101
-    AND h.CodPred = 43423;
+		AND h.AnoSem = 20021
+		AND h.NumSala = 101
+		AND h.CodPred = 43423;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
@@ -365,7 +365,7 @@ BEGIN
     END LOOP;
 
     CLOSE cur;
-END //
+END
 //
 DELIMITER ;
 
@@ -385,7 +385,8 @@ BEGIN
     FROM Professor p
     JOIN Depto d1 ON p.CodDepto = d1.CodDepto
     JOIN ProfTurma pt ON p.CodProf = pt.CodProf
-    JOIN Disciplina disc ON pt.CodDepto = disc.CodDepto AND pt.NumDisc = disc.NumDisc
+    JOIN Disciplina disc ON pt.CodDepto = disc.CodDepto
+		AND pt.NumDisc = disc.NumDisc
     JOIN Depto d2 ON disc.CodDepto = d2.CodDepto
     WHERE p.CodDepto != disc.CodDepto;
 
@@ -402,7 +403,7 @@ BEGIN
     END LOOP;
 
     CLOSE cur;
-END //
+END
 //
 DELIMITER ;
 
@@ -423,10 +424,20 @@ BEGIN
     SELECT DISTINCT p.NomeProf, pt1.AnoSem, pt1.CodDepto, pt1.NumDisc, pt1.SiglaTur
     FROM Professor p
     JOIN ProfTurma pt1 ON p.CodProf = pt1.CodProf
-    JOIN Horario h1 ON pt1.AnoSem = h1.AnoSem AND pt1.CodDepto = h1.CodDepto AND pt1.NumDisc = h1.NumDisc AND pt1.SiglaTur = h1.SiglaTur
-    JOIN Horario h2 ON h1.AnoSem = h2.AnoSem AND h1.DiaSem = h2.DiaSem AND h1.HoraInicio = h2.HoraInicio 
-    AND (h1.CodDepto <> h2.CodDepto OR h1.NumDisc <> h2.NumDisc OR h1.SiglaTur <> h2.SiglaTur)
-    JOIN ProfTurma pt2 ON h2.AnoSem = pt2.AnoSem AND h2.CodDepto = pt2.CodDepto AND h2.NumDisc = pt2.NumDisc AND h2.SiglaTur = pt2.SiglaTur
+    JOIN Horario h1 ON pt1.AnoSem = h1.AnoSem 
+		AND pt1.CodDepto = h1.CodDepto 
+        AND pt1.NumDisc = h1.NumDisc 
+        AND pt1.SiglaTur = h1.SiglaTur
+    JOIN Horario h2 ON h1.AnoSem = h2.AnoSem 
+		AND h1.DiaSem = h2.DiaSem 
+        AND h1.HoraInicio = h2.HoraInicio 
+		AND (h1.CodDepto <> h2.CodDepto 
+			OR h1.NumDisc <> h2.NumDisc 
+            OR h1.SiglaTur <> h2.SiglaTur)
+    JOIN ProfTurma pt2 ON h2.AnoSem = pt2.AnoSem 
+		AND h2.CodDepto = pt2.CodDepto 
+		AND h2.NumDisc = pt2.NumDisc 
+        AND h2.SiglaTur = pt2.SiglaTur
     WHERE pt1.CodProf = pt2.CodProf;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
@@ -442,7 +453,7 @@ BEGIN
     END LOOP;
 
     CLOSE cur;
-END //
+END
 //
 DELIMITER ;
 
@@ -458,8 +469,10 @@ BEGIN
     DECLARE cur CURSOR FOR
     SELECT d.NomeDisciplina, dp.NomeDisciplina AS NomePreRequisito
     FROM Disciplina d
-    JOIN PreRequisito pr ON d.NumDisc = pr.NumDisc AND d.CodDepto = pr.CodDepto
-    JOIN Disciplina dp ON pr.NumDiscPreReq = dp.NumDisc AND pr.CodDeptoPreReq = dp.CodDepto;
+    JOIN PreRequisito pr ON d.NumDisc = pr.NumDisc 
+		AND d.CodDepto = pr.CodDepto
+    JOIN Disciplina dp ON pr.NumDiscPreReq = dp.NumDisc	
+		AND pr.CodDeptoPreReq = dp.CodDepto;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
@@ -474,7 +487,7 @@ BEGIN
     END LOOP;
 
     CLOSE cur;
-END //
+END
 //
 DELIMITER ;
 
@@ -492,7 +505,8 @@ BEGIN
     WHERE NOT EXISTS (
         SELECT 1 
         FROM PreRequisito pr
-        WHERE d.NumDisc = pr.NumDisc AND d.CodDepto = pr.CodDepto
+        WHERE d.NumDisc = pr.NumDisc 
+			AND d.CodDepto = pr.CodDepto
     );
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
@@ -508,7 +522,7 @@ BEGIN
     END LOOP;
 
     CLOSE cur;
-END //
+END
 //
 DELIMITER ;
 
@@ -523,7 +537,8 @@ BEGIN
     DECLARE cur CURSOR FOR
     SELECT d.NomeDisciplina
     FROM Disciplina d
-    JOIN PreRequisito pr ON d.NumDisc = pr.NumDisc AND d.CodDepto = pr.CodDepto
+    JOIN PreRequisito pr ON d.NumDisc = pr.NumDisc 
+		AND d.CodDepto = pr.CodDepto
     GROUP BY d.NomeDisciplina
     HAVING COUNT(pr.NumDiscPreReq) >= 2;
 
@@ -540,30 +555,20 @@ BEGIN
     END LOOP;
 
     CLOSE cur;
-END //
+END
 //
 DELIMITER ;
 
-CALL get_departamentos_2002();
-
-CALL get_professores_depto_INF01();
-
+CALL get_cod_depto_turmas(20021);
+CALL get_cod_depto_turmas_prof(20021, 'INF01');
 CALL get_horarios_antunes();
-
 CALL get_departamentos_sala();
-
-CALL get_professores_titulo_doutor();
-
-CALL get_salas_informática_antunes();
-
-CALL get_horarios_antunes_sala_101();
-
-CALL get_professores_outros_dept();
-
-CALL get_professores_horarios_conflitantes();
-
-CALL get_disciplinas_com_pre_requisitos();
-
-CALL get_disciplinas_sem_pre_requisitos();
-
-CALL get_disciplinas_com_dois_pre_requisitos();
+CALL get_professores_doutor_sem_aulas();
+CALL get_salas_segunda();
+CALL get_salas_quarta();
+CALL get_aulas_antunes();
+CALL get_professores_outros_deptos();
+CALL get_horarios_conflitantes();
+CALL get_disciplinas_com_prerequisitos();
+CALL get_disciplinas_sem_prerequisitos();
+CALL get_disciplinas_com_2_prerequisitos();
