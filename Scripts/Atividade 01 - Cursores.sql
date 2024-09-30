@@ -8,7 +8,7 @@ CREATE PROCEDURE get_cod_depto_turmas(IN ano_sem_pass INT)
 BEGIN
 	DECLARE done INT DEFAULT FALSE;
     DECLARE depto VARCHAR(20);
-    
+
     DECLARE cursor_depto CURSOR FOR
 		SELECT
 			DISTINCT CodDepto
@@ -16,52 +16,54 @@ BEGIN
 			Turma
 		WHERE
 			AnoSem = ano_sem_pass;
-            
+
 	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-    
+
     OPEN cursor_depto;
-	
+
     DROP TABLE IF EXISTS results;
 
    CREATE TEMPORARY TABLE results(
 		RESULT VARCHAR(255)
 	);
-    
+
     read_loop: LOOP
 		FETCH cursor_depto INTO depto;
-        
+
         IF done THEN
 			LEAVE read_loop;
 		END IF;
-        
-        INSERT INTO results(RESULT) 
+
+        INSERT INTO results(RESULT)
         VALUES(depto);
 	END LOOP;
-    
-    SELECT * 
+
+    SELECT *
     FROM results;
-    
+
     CLOSE cursor_depto;
-END 
-// 
+END
+//
 DELIMITER ;
 
 CALL get_cod_depto_turmas(20021);
 
 /* 02. Obter os códigos dos professores que são do departamento de código 'INF01' e que ministraram ao menos uma turma em 2002/1. */
 
+DROP PROCEDURE IF EXISTS get_cod_depto_turmas_prof;
+
 DELIMITER //
 
 CREATE PROCEDURE get_cod_depto_turmas_prof(IN ano_sem_pass INT, IN cod_prof_depto VARCHAR(20))
-BEGIN 
+BEGIN
 	DECLARE done INT DEFAULT FALSE;
 	DECLARE cod_prof_r VARCHAR(20);
 	DECLARE ano_sem_r INT;
 	DECLARE qtd_r INT;
 
     DECLARE cursor_depto CURSOR FOR
-        SELECT 
-            pt.CodProf, pt.AnoSem, COUNT(pt.AnoSem) AS QTD 
+        SELECT
+            pt.CodProf, pt.AnoSem, COUNT(pt.AnoSem) AS QTD
         FROM ProfTurma pt
         JOIN Professor p ON pt.CodProf = p.CodProf
         WHERE p.CodDepto = cod_prof_depto
@@ -77,18 +79,18 @@ BEGIN
 
 	read_loop: LOOP
 		FETCH cursor_depto INTO cod_prof_r, ano_sem_r, qtd_r;
-	
+
 		IF done THEN
 			LEAVE read_loop;
 		END IF;
-	
+
 		INSERT INTO results(RESULT) 
-		VALUES(CONCAT('O professor de código ', cod_prof_r, ' no ano ', ano_sem_r, ' ministrou ', qtd_r, ' aulas.'));
-		
+		VALUES(CONCAT('O professor de código ', cod_prof_r, ' no ano ', ano_sem_r, ' ministrou ', qtd_r, ' aula(s).'));
+
 	END LOOP;
-	
+
 	SELECT * FROM results;
-	
+
 	CLOSE cursor_depto;
 END
 //
@@ -103,25 +105,25 @@ DROP PROCEDURE IF EXISTS get_horarios_antunes;
 DELIMITER //
 
 CREATE PROCEDURE get_horarios_antunes(IN nome_prof VARCHAR(40))
-BEGIN 
+BEGIN
 	DECLARE done INT DEFAULT FALSE;
 	DECLARE dia_sem VARCHAR(40);
 	DECLARE hora_inicio VARCHAR(40);
 	DECLARE num_horas VARCHAR(40);
     DECLARE sigla_tur VARCHAR(20);
     DECLARE hora_formata VARCHAR(5);
-	
+
 	DECLARE cur CURSOR FOR
-        SELECT 
+        SELECT
             h.DiaSem,
-            h.HoraInicio, 
+            h.HoraInicio,
             h.NumHoras,
             h.SiglaTur
         FROM Horario h
         JOIN ProfTurma p ON h.SiglaTur = p.SiglaTur
         JOIN Professor p1 ON p1.CodProf = p.CodProf
 			AND p1.NomeProf = nome_prof;
-	
+
 	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
 	OPEN cur;
@@ -131,30 +133,30 @@ BEGIN
 	CREATE TEMPORARY TABLE IF NOT EXISTS results(
 		result VARCHAR(255)
 	);
-	
+
 	read_loop: LOOP
 		FETCH cur INTO dia_sem, hora_inicio, num_horas, sigla_tur;
-		
+
 		IF done THEN
 			LEAVE read_loop;
 		END IF;
-	
+
         SET hora_inicio = LPAD(hora_inicio, 4, '0');  -- Garantir que tenha 4 dígitos
         SET hora_formata = CONCAT(SUBSTRING(hora_inicio, 1, 2), ':', SUBSTRING(hora_inicio, 3, 2));  -- Formatar para HH:MM
 
         INSERT INTO results(result)
-        VALUES(CONCAT('Dia da Semana: ', dia_sem, 
-                      ' Horário de início: ', hora_formata, 
-                      ' Número de horas: ', num_horas, 
+        VALUES(CONCAT('Dia da Semana: ', dia_sem,
+                      ' Horário de início: ', hora_formata,
+                      ' Número de horas: ', num_horas,
                       ' Turma: ', sigla_tur));
-                      
+
 	END LOOP;
-	
+
 	CLOSE cur;
 
 	SELECT *
 	FROM results;
-	
+
 END
 //
 DELIMITER ;
@@ -172,9 +174,9 @@ BEGIN
     DECLARE done INT DEFAULT FALSE;
     DECLARE nome_depto VARCHAR(40);
     DECLARE nome_predio VARCHAR(40);
-    
+
     DECLARE cur CURSOR FOR
-        SELECT DISTINCT 
+        SELECT DISTINCT
             d.NomeDepto,
             p.NomePredio,
             h.NumSala
@@ -197,21 +199,21 @@ BEGIN
 
     read_loop: LOOP
         FETCH cur INTO nome_depto, nome_predio, num_sala;
-    
+
         IF done THEN
             LEAVE read_loop;
         END IF;
-    
+
         INSERT INTO results (result)
         VALUES (CONCAT('Departamento: ', nome_depto, ' Prédio: ', nome_predio, ' Sala: ', num_sala));
-        
+
     END LOOP;
-    
+
     CLOSE cur;
 
     SELECT DISTINCT *
     FROM results;
-    
+
 END
 //
 DELIMITER ;
@@ -241,11 +243,11 @@ BEGIN
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
     DROP TEMPORARY TABLE IF EXISTS results; 
-    
+
     CREATE TEMPORARY TABLE results(
         result INT
     );
-    
+
     OPEN cur;
 
     read_loop: LOOP
@@ -253,20 +255,27 @@ BEGIN
         IF done THEN
             LEAVE read_loop;
         END IF;
-       
+
         INSERT INTO results(result)
         VALUES (cod_prof);
-      
+
     END LOOP;
 
     CLOSE cur;
-   
+
     SELECT *
     FROM results;
-  
-END //
 
+END
+//
 DELIMITER ;
+
+INSERT INTO `Professor` (`CodProf`, `CodDepto`, `CodTit`, `NomeProf`) VALUES
+    (1005, 'INF01', 2, 'Doutor 1'),
+    (1006, 'INF01', 2, 'Doutor 2'),
+    (1007, 'INF01', 2, 'Doutor 3'),
+    (1008, 'INF01', 2, 'Doutor 4'),
+    (1009, 'INF01', 2, 'Doutor 5');
 
 CALL get_professores_doutor_sem_aulas('Doutor', 20021);
 
@@ -285,7 +294,7 @@ BEGIN
     DECLARE dia_sem_r INT;
     DECLARE qtd_r INT;
     DECLARE nome_prof_r VARCHAR(40);
-    
+
     DECLARE cur CURSOR FOR
 		SELECT DISTINCT
 			s.NumSala,
@@ -306,38 +315,40 @@ BEGIN
 			AND h.AnoSem = ano_sem
 		GROUP BY s.NumSala, s.CodPred, s.NumSala, h.DiaSem, p.NomeProf
         HAVING Quantidade >= 1;
-        
+
         DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-        
+
         OPEN cur;
-        
+
         DROP TEMPORARY TABLE IF EXISTS results;
-        
+
         CREATE TEMPORARY TABLE results(
 			result VARCHAR(255)
         );
-        
+
         read_loop: LOOP
 			FETCH cur INTO num_sala_r, cod_pred_r, dia_sem_r, nome_prof_r, qtd_r;
-            
+
             IF done THEN
 				LEAVE read_loop;
 			END IF;
-            
+
             INSERT INTO results(result)
             VALUES (CONCAT('Número Sala: ', num_sala_r, ' Número Prédio: ', cod_pred_r, ' Dia Semana: ', dia_sem_r, ' Professor: ', nome_prof_r));
-		
+
         END LOOP;
-        
+
         SELECT *
         FROM results;
 END
 //
 DELIMITER ;
 
-CALL get_id_sala(20021, 'Antunes', 'Informática'); 
+CALL get_id_sala(20021, 'Antunes', 'Informática');
 
-/* 7. Obter o dia da semana, a hora de início e o número de horas de cada turma ministrada por 'Antunes' em 2002/1,  
+-- Continuar a corrigir a partir daqui...
+
+/* 7. Obter o dia da semana, a hora de início e o número de horas de cada turma ministrada por 'Antunes' em 2002/1,
       na sala número 101 e prédio de código 43423 */
 
 DELIMITER //
