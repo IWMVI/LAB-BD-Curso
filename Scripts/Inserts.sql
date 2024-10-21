@@ -23,6 +23,12 @@ VALUES
 	('ADM01', 'Administração'),
 	('MAT01', 'Matemática');
 
+UPDATE `Depto`
+SET
+	`NomeDepto` = 'Informática - aulas'
+WHERE
+	`CodDepto` = 'INF01';
+
 -- Titulação
 INSERT INTO
 	titulacao (CodTit, NomeTit)
@@ -83,3 +89,31 @@ VALUES
 	(20021, 'INF01', 102, 'A2', 2, 1000, 102, 43423, 2),
 	(20021, 'ADM01', 201, 'B1', 3, 900, 201, 10111, 3),
 	(20021, 'MAT01', 301, 'C1', 5, 1300, 101, 43423, 4);
+
+INSERT INTO
+	turma (AnoSem, CodDepto, NumDisc, SiglaTur, CapacTur)
+VALUES
+	(202301, 'INF01', 101, 'A1', 30),
+	(202301, 'INF01', 102, 'A2', 25);
+
+INSERT INTO
+	ProfTurma (AnoSem, CodDepto, NumDisc, SiglaTur, CodProf)
+VALUES
+	(202301, 'INF01', 101, 'A1', 1001),
+	(202301, 'INF01', 102, 'A2', 1002);
+
+INSERT INTO
+	Horario (AnoSem, CodDepto, NumDisc, SiglaTur, DiaSem, HoraInicio, NumSala, CodPred, NumHoras)
+VALUES
+	(202301, 'INF01', 101, 'A1', 2, 800, 203, 50000, 2), -- Aula na sala 203 do prédio 'Informática - aulas'
+	(202301, 'INF01', 102, 'A2', 3, 1000, 203, 50000, 2);
+
+INSERT INTO
+	Predio (CodPred, NomePredio)
+VALUES
+	(50000, 'Informática - aulas');
+
+INSERT INTO
+	Sala (CodPred, NumSala, DescricaoSala, CapacSala)
+VALUES
+	(50000, 203, 'Laboratório de Programação', 35);
