@@ -10,7 +10,7 @@
       "port": 3306,
       "driver": "MySQL",
       "name": "Aulas",
-      "database": "Aulas",
+      "database": "MySQL",
       "username": "root"
     }
   ]
