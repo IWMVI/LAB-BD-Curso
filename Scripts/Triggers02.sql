@@ -3,7 +3,11 @@ USE Faculdade;
 -- CRIAR PROCEDURE QUE:
 -- Liste os códigos dos professores com título denominado 'Doutor' que não ministraram aulas em 2019/1.
 -- Caso nao existam professores dar uma mensagem de erro usando um dos métodos para o tratamento de Exceções.
-DELIMITER / / CREATE PROCEDURE sp_professores_doutores_sem_aula_2019_1 () BEGIN DECLARE qtd INT;
+
+DROP PROCEDURE IF EXISTS sp_professores_doutores_sem_aula_2019_1;
+
+DELIMITER // 
+CREATE PROCEDURE sp_professores_doutores_sem_aula_2019_1 () BEGIN DECLARE qtd INT;
 
 SELECT
     COUNT(*) INTO qtd
@@ -18,7 +22,6 @@ WHERE
 IF qtd = 0 THEN SIGNAL SQLSTATE '45000'
 SET
     MESSAGE_TEXT = 'Não existem professores doutores sem aula em 2019/1.';
-
 ELSE
 SELECT
     p.CodProf
@@ -32,6 +35,7 @@ WHERE
 
 END IF;
 
-END / / DELIMITER;
+END 
+// DELIMITER;
 
 CALL sp_professores_doutores_sem_aula_2019_1 ();

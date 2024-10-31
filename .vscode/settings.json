@@ -9,8 +9,8 @@
       "server": "localhost",
       "port": 3306,
       "driver": "MySQL",
-      "name": "Aulas",
-      "database": "Aulas",
+      "name": "Faculdade",
+      "database": "Faculdade",
       "username": "root"
     }
   ]
