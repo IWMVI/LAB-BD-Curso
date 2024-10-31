@@ -2,14 +2,14 @@ USE Faculdade;
 
 -- Prédio
 INSERT INTO
-	predio (CodPred, NomePredio)
+	Predio (CodPred, NomePredio)
 VALUES
 	(43423, 'Informática'),
 	(10111, 'Administração');
 
 -- Sala
 INSERT INTO
-	sala (CodPred, NumSala, DescricaoSala, CapacSala)
+	Sala (CodPred, NumSala, DescricaoSala, CapacSala)
 VALUES
 	(43423, 101, 'Sala de aula', 30),
 	(43423, 102, 'Laboratório', 25),
@@ -17,7 +17,7 @@ VALUES
 
 -- Departamento
 INSERT INTO
-	depto (CodDepto, NomeDepto)
+	Depto (CodDepto, NomeDepto)
 VALUES
 	('INF01', 'Informática'),
 	('ADM01', 'Administração'),
@@ -31,7 +31,7 @@ WHERE
 
 -- Titulação
 INSERT INTO
-	titulacao (CodTit, NomeTit)
+	Titulacao (CodTit, NomeTit)
 VALUES
 	(1, 'Mestre'),
 	(2, 'Doutor'),
@@ -39,7 +39,7 @@ VALUES
 
 -- Professor
 INSERT INTO
-	professor (CodProf, CodDepto, CodTit, NomeProf)
+	Professor (CodProf, CodDepto, CodTit, NomeProf)
 VALUES
 	(1001, 'INF01', 2, 'Antunes'),
 	(1002, 'INF01', 1, 'Paulo'),
@@ -48,7 +48,7 @@ VALUES
 
 -- Disciplina
 INSERT INTO
-	disciplina (CodDepto, NumDisc, NomeDisc, CreditoDisc)
+	Disciplina (CodDepto, NumDisc, NomeDisc, CreditoDisc)
 VALUES
 	('INF01', 101, 'Algoritmos', 4),
 	('INF01', 102, 'BD', 4),
@@ -57,14 +57,14 @@ VALUES
 
 -- PreReq
 INSERT INTO
-	prereq (CodDeptoPreReq, NumDiscPreReq, CodDepto, NumDisc)
+	PreReq (CodDeptoPreReq, NumDiscPreReq, CodDepto, NumDisc)
 VALUES
 	('INF01', 101, 'INF01', 102),
 	('MAT01', 301, 'INF01', 101);
 
 -- Turma
 INSERT INTO
-	turma (AnoSem, CodDepto, NumDisc, SiglaTur, CapacTur)
+	Turma (AnoSem, CodDepto, NumDisc, SiglaTur, CapacTur)
 VALUES
 	(20021, 'INF01', 101, 'A1', 30),
 	(20021, 'INF01', 102, 'A2', 25),
@@ -91,7 +91,7 @@ VALUES
 	(20021, 'MAT01', 301, 'C1', 5, 1300, 101, 43423, 4);
 
 INSERT INTO
-	turma (AnoSem, CodDepto, NumDisc, SiglaTur, CapacTur)
+	Turma (AnoSem, CodDepto, NumDisc, SiglaTur, CapacTur)
 VALUES
 	(202301, 'INF01', 101, 'A1', 30),
 	(202301, 'INF01', 102, 'A2', 25);
@@ -103,12 +103,6 @@ VALUES
 	(202301, 'INF01', 102, 'A2', 1002);
 
 INSERT INTO
-	Horario (AnoSem, CodDepto, NumDisc, SiglaTur, DiaSem, HoraInicio, NumSala, CodPred, NumHoras)
-VALUES
-	(202301, 'INF01', 101, 'A1', 2, 800, 203, 50000, 2), -- Aula na sala 203 do prédio 'Informática - aulas'
-	(202301, 'INF01', 102, 'A2', 3, 1000, 203, 50000, 2);
-
-INSERT INTO
 	Predio (CodPred, NomePredio)
 VALUES
 	(50000, 'Informática - aulas');
@@ -116,4 +110,9 @@ VALUES
 INSERT INTO
 	Sala (CodPred, NumSala, DescricaoSala, CapacSala)
 VALUES
+INSERT INTO
+	Horario (AnoSem, CodDepto, NumDisc, SiglaTur, DiaSem, HoraInicio, NumSala, CodPred, NumHoras)
+VALUES
+	(202301, 'INF01', 101, 'A1', 2, 800, 203, 50000, 2), -- Aula na sala 203 do prédio 'Informática - aulas'
+	(202301, 'INF01', 102, 'A2', 3, 1000, 203, 50000, 2),
 	(50000, 203, 'Laboratório de Programação', 35);

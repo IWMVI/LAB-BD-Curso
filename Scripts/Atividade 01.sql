@@ -4,7 +4,7 @@ USE faculdade;
 SELECT DISTINCT
 	CodDepto
 FROM
-	turma t
+	Turma t
 WHERE
 	AnoSem = 20021;
 
@@ -12,8 +12,8 @@ WHERE
 SELECT DISTINCT
 	p.CodProf
 FROM
-	professor p
-	JOIN profturma p2 ON p2.CodProf = p.CodProf
+	Professor p
+	JOIN ProfTurma p2 ON p2.CodProf = p.CodProf
 WHERE
 	p.CodDepto = 'INF01'
 	AND p2.AnoSem = 20021;
@@ -24,9 +24,9 @@ SELECT
 	h.HoraInicio,
 	h.NumHoras
 FROM
-	professor p
-	JOIN profturma p2 ON p2.CodProf = p.CodProf
-	JOIN horario h ON h.AnoSem = p2.AnoSem
+	Professor p
+	JOIN ProfTurma p2 ON p2.CodProf = p.CodProf
+	JOIN Horario h ON h.AnoSem = p2.AnoSem
 WHERE
 	p.NomeProf = 'Antunes'
 	AND h.AnoSem = 20021;
@@ -35,13 +35,13 @@ WHERE
 SELECT DISTINCT
 	d.NomeDepto
 FROM
-	turma t
-	JOIN horario h ON t.AnoSem = h.AnoSem
+	Turma t
+	JOIN Horario h ON t.AnoSem = h.AnoSem
 	AND t.CodDepto = h.CodDepto
 	AND t.NumDisc = h.NumDisc
 	AND t.SiglaTur = h.SiglaTur
-	JOIN predio p ON p.CodPred = h.CodPred
-	JOIN depto d ON t.CodDepto = d.CodDepto
+	JOIN Predio p ON p.CodPred = h.CodPred
+	JOIN Depto d ON t.CodDepto = d.CodDepto
 WHERE
 	p.NomePredio = 'Informática'
 	AND h.NumSala = 101
@@ -51,63 +51,63 @@ WHERE
 SELECT
 	p.CodProf
 FROM
-	professor p
-	JOIN titulacao t ON t.CodTit = p.CodTit
+	Professor p
+	JOIN Titulacao t ON t.CodTit = p.CodTit
 WHERE
 	t.NomeTit = 'Doutor'
 	AND p.CodProf NOT IN (
 		SELECT
 			p2.CodProf
 		FROM
-			profturma p2
+			ProfTurma p2
 		WHERE
 			p2.AnoSem = 20021
 	);
 
 /* 06. Obter os identificadores das salas (código do prédio e número da sala) que, em 2002/1:
- *     A) Nas segundas-feiras (dia da semana = 2), tiveram ao menos uma turma do departamento 'Informática': */
+A) Nas segundas-feiras (dia da semana = 2), tiveram ao menos uma turma do departamento 'Informática': */
 SELECT DISTINCT
 	h.CodPred,
 	h.NumSala
 FROM
-	horario h
-	JOIN turma t ON h.CodDepto = t.CodDepto
+	Horario h
+	JOIN Turma t ON h.CodDepto = t.CodDepto
 	AND h.AnoSem = t.AnoSem
 	AND h.NumDisc = t.NumDisc
 	AND h.SiglaTur = t.SiglaTur
 WHERE
 	h.DiaSem = 2
 	AND h.AnoSem = 20021
-	AND t.CodDepto = 'Informática';
+	AND t.CodDepto = 'Informática - Aulas';
 
 /* B) Nas quartas-feiras (dia da semana = 4), tiveram ao menos uma turma ministrada pelo professor denominado 'Antunes': */
 SELECT DISTINCT
-	h.CodPred,
-	h.NumSala
+	h.CodPred AS "Código do Prédio",
+	h.NumSala AS "Número da Sala"
 FROM
-	horario h
-	JOIN profturma p ON p.CodDepto = h.CodDepto
+	Horario h
+	JOIN ProfTurma p ON p.CodDepto = h.CodDepto
 	AND p.AnoSem = h.AnoSem
 	AND p.NumDisc = h.NumDisc
 	AND p.SiglaTur = h.SiglaTur
-	JOIN professor p2 ON p.CodProf = p2.CodProf
+	JOIN Professor p2 ON p.CodProf = p2.CodProf
 WHERE
 	h.DiaSem = 4
 	AND p2.NomeProf = 'Antunes';
 
 /* 07. Obter o dia da semana, a hora de início e o número de horas de cada horário de cada turma ministrada por um professor de nome `Antunes',
- *  em 2002/1, na sala número 101 do prédio de código 43423:*/
+em 2002/1, na sala número 101 do prédio de código 43423:*/
 SELECT
-	h.DiaSem,
-	h.HoraInicio,
-	h.NumHoras
+	h.DiaSem AS "Dia da Semana",
+	FORMAT (h.HoraInicio, 'HH:mm') AS "Hora de Início",
+	h.NumHoras AS "Número de Horas"
 FROM
-	horario h
-	JOIN profturma p ON p.NumDisc = h.NumDisc
+	Horario h
+	JOIN ProfTurma p ON p.NumDisc = h.NumDisc
 	AND p.AnoSem = h.AnoSem
 	AND p.CodDepto = h.CodDepto
 	AND p.SiglaTur = h.SiglaTur
-	JOIN professor p2 ON p2.CodProf = p.CodProf
+	JOIN Professor p2 ON p2.CodProf = p.CodProf
 WHERE
 	p2.NomeProf = 'Antunes'
 	AND h.NumSala = 101
@@ -115,25 +115,25 @@ WHERE
 	AND h.AnoSem = 20021;
 
 /* 08. Para cada professor que já ministrou aulas em disciplinas de outros departamentos, 
- *     obter o código do professor, seu nome, o nome de seu departamento e o nome do departamento no qual 
- *     ministrou disciplina: */
+obter o código do professor, seu nome, o nome de seu departamento e o nome do departamento no qual 
+ministrou disciplina: */
 SELECT DISTINCT
 	p.CodProf,
 	p.NomeProf,
 	p.CodDepto AS 'Depto Origem',
 	d3.NomeDepto AS 'Depto Ministrado'
 FROM
-	professor p
-	JOIN profturma p2 ON p2.CodProf = p.CodProf
-	JOIN depto d ON d.CodDepto = p2.CodDepto
-	JOIN disciplina d2 ON d2.CodDepto = d.CodDepto
-	JOIN depto d3 ON d2.CodDepto = d3.CodDepto
+	Professor p
+	JOIN ProfTurma p2 ON p2.CodProf = p.CodProf
+	JOIN Depto d ON d.CodDepto = p2.CodDepto
+	JOIN Disciplina d2 ON d2.CodDepto = d.CodDepto
+	JOIN Depto d3 ON d2.CodDepto = d3.CodDepto
 WHERE
 	p.CodDepto <> d2.CodDepto;
 
 /* 09. Obter o nome dos professores que possuem horários conflitantes 
- *     (possuem turmas que tenham a mesma hora inicial, no mesmo dia da semana e no mesmo semestre). 
- *     Além dos nomes, mostrar as chaves primárias das turmas em conflito: */
+(possuem turmas que tenham a mesma hora inicial, no mesmo dia da semana e no mesmo semestre). 
+Além dos nomes, mostrar as chaves primárias das turmas em conflito: */
 SELECT DISTINCT
 	P.NomeProf,
 	H1.AnoSem,
@@ -146,18 +146,17 @@ SELECT DISTINCT
 	H2.NumDisc AS NumDiscConflito,
 	H2.SiglaTur AS SiglaTurConflito
 FROM
-	professor P
-	JOIN profTurma PT1 ON P.CodProf = PT1.CodProf
-	JOIN horario H1 ON PT1.AnoSem = H1.AnoSem
+	Professor P
+	JOIN ProfTurma PT1 ON P.CodProf = PT1.CodProf
+	JOIN Horario H1 ON PT1.AnoSem = H1.AnoSem
 	AND PT1.CodDepto = H1.CodDepto
 	AND PT1.NumDisc = H1.NumDisc
 	AND PT1.SiglaTur = H1.SiglaTur
-	JOIN profTurma PT2 ON P.CodProf = PT2.CodProf
-	JOIN horario H2 ON PT2.AnoSem = H2.AnoSem
+	JOIN ProfTurma PT2 ON P.CodProf = PT2.CodProf
+	JOIN Horario H2 ON PT2.AnoSem = H2.AnoSem
 	AND PT2.CodDepto = H2.CodDepto
 	AND PT2.NumDisc = H2.NumDisc
 	AND PT2.SiglaTur = H2.SiglaTur
-	-- Comparando horários conflitantes
 WHERE
 	H1.AnoSem = H2.AnoSem
 	AND H1.DiaSem = H2.DiaSem

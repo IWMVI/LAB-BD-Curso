@@ -1,6 +1,6 @@
-CREATE DATABASE faculdade;
+CREATE DATABASE Faculdade;
 
-USE faculdade;
+USE Faculdade;
 
 CREATE TABLE
     Predio (CodPred INT, NomePredio VARCHAR(40), PRIMARY KEY (CodPred));
