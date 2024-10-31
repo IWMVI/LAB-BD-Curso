@@ -110,9 +110,10 @@ VALUES
 INSERT INTO
 	Sala (CodPred, NumSala, DescricaoSala, CapacSala)
 VALUES
+	(50000, 203, 'Laboratório de Programação', 35);
+
 INSERT INTO
 	Horario (AnoSem, CodDepto, NumDisc, SiglaTur, DiaSem, HoraInicio, NumSala, CodPred, NumHoras)
 VALUES
 	(202301, 'INF01', 101, 'A1', 2, 800, 203, 50000, 2), -- Aula na sala 203 do prédio 'Informática - aulas'
-	(202301, 'INF01', 102, 'A2', 3, 1000, 203, 50000, 2),
-	(50000, 203, 'Laboratório de Programação', 35);
+	(202301, 'INF01', 102, 'A2', 3, 1000, 203, 50000, 2);

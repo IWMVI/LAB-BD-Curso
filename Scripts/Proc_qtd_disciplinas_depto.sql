@@ -49,4 +49,4 @@ END //
 -- Restaura o delimitador padrão
 DELIMITER ;
 
-SELECT * FROM Predio
+CALL ContDisc();
