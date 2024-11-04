@@ -171,3 +171,4 @@ ORDER BY
 	H1.AnoSem,
 	H1.DiaSem,
 	H1.HoraInicio;
+	

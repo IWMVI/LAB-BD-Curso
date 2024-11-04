@@ -1,9 +1,15 @@
+DROP DATABASE if EXISTS faculdade;
+
 CREATE DATABASE Faculdade;
 
 USE Faculdade;
 
 CREATE TABLE
-    Predio (CodPred INT, NomePredio VARCHAR(40), PRIMARY KEY (CodPred));
+    Predio (
+        CodPred INT,
+        NomePredio VARCHAR(40),
+        PRIMARY KEY (CodPred)
+    );
 
 CREATE TABLE
     Sala (
@@ -16,10 +22,18 @@ CREATE TABLE
     );
 
 CREATE TABLE
-    Depto (CodDepto CHAR(5), NomeDepto VARCHAR(40), PRIMARY KEY (CodDepto));
+    Depto (
+        CodDepto CHAR(5),
+        NomeDepto VARCHAR(40),
+        PRIMARY KEY (CodDepto)
+    );
 
 CREATE TABLE
-    Titulacao (CodTit INT, NomeTit VARCHAR(40), PRIMARY KEY (CodTit));
+    Titulacao (
+        CodTit INT,
+        NomeTit VARCHAR(40),
+        PRIMARY KEY (CodTit)
+    );
 
 CREATE TABLE
     Professor (
@@ -87,7 +101,14 @@ CREATE TABLE
         NumSala INT,
         CodPred INT,
         NumHoras INT,
-        PRIMARY KEY (AnoSem, CodDepto, NumDisc, SiglaTur, DiaSem, HoraInicio),
+        PRIMARY KEY (
+            AnoSem,
+            CodDepto,
+            NumDisc,
+            SiglaTur,
+            DiaSem,
+            HoraInicio
+        ),
         FOREIGN KEY (AnoSem, CodDepto, NumDisc, SiglaTur) REFERENCES Turma (AnoSem, CodDepto, NumDisc, SiglaTur),
         FOREIGN KEY (NumSala, CodPred) REFERENCES Sala (NumSala, CodPred)
     );
