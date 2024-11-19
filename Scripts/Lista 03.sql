@@ -2,8 +2,8 @@ USE faculdade;
 
 -- Baseado no modelo final de dados criado em aula. Resolver as seguintes questões usando SQL:
 -- Para a criação dos comandos abaixo, utilizar CURSOR dentro de STORED PROCEDURE.
--- Obter os identificadores de todas turmas de disciplinas do departamento denominado `Informática'
--- que não têm aula na sala de número 102 do prédio de código 43421.
+-- 01.  Obter os identificadores de todas turmas de disciplinas do departamento denominado `Informática'
+--      que não têm aula na sala de número 102 do prédio de código 43421.
 
 DELIMITER //
 CREATE PROCEDURE GetTurmasSemAulaSala102()
@@ -47,7 +47,8 @@ DELIMITER ;
 
 call GetTurmasSemAulaSala102();
 
--- 2.    Obter o número de salas que foram usadas no ano-semestre 20021 por turmas do departamento denominado `Informática'.
+-- 2.   Obter o número de salas que foram usadas no ano-semestre 20021 por turmas do 
+--      departamento denominado `Informática'.
 
 DELIMITER //
 
@@ -68,7 +69,8 @@ DELIMITER ;
 
 CALL GetNumSalasUsadas();
 
--- 3.    Obter os nomes das disciplinas do departamento denominado `Informática' que têm o maior número de créditos dentre as disciplinas deste departamento.
+-- 3.   Obter os nomes das disciplinas do departamento denominado `Informática' que têm o maior número de créditos dentre 
+--      as disciplinas deste departamento.
 
 
 DELIMITER //
@@ -92,13 +94,14 @@ DELIMITER ;
 
 CALL GetMaxCreditosDisciplinas();
 
--- 4.   Para cada departamento, obter seu nome e os créditos totais oferecidos no ano-semestre 20022.
---  O número de créditos oferecidos é calculado através do produto de número de créditos da disciplina pelo número de 
--- turmas oferecidas no semestre.
--- A - (desprezando departamentos sem turmas)
--- B- (incluindo departamentos sem turmas)
--- A - (desprezando departamentos sem turmas)
+-- 4.   Para cada departamento, obter seu nome e os créditos totais oferecidos no ano-semestre 20022.
+--      O número de créditos oferecidos é calculado através do produto de número de créditos da disciplina pelo número de 
+--      turmas oferecidas no semestre.
+--      A - (desprezando departamentos sem turmas)
+--      B - (incluindo departamentos sem turmas)
 
+
+-- A - (desprezando departamentos sem turmas)
 
 DELIMITER //
 
@@ -118,7 +121,7 @@ DELIMITER ;
 
 CALL GetCreditosTotaisDesprezando();
 
--- B- (incluindo departamentos sem turmas)
+-- B - (incluindo departamentos sem turmas)
 
 DELIMITER //
 
